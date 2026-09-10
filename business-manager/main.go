@@ -8,6 +8,8 @@ type Product struct {
 	Quantity int
 }
 
+var products []Product
+
 func main() {
 	fmt.Println("================================")
 	fmt.Println("       BUSINESS MANAGER")
@@ -39,23 +41,37 @@ func main() {
 
 		var productPrice float64
 
-		fmt.Print("Enter product price: ")
-		fmt.Scanln(&productPrice)
+		for {
+			fmt.Print("Enter product price: ")
+
+			if _, err := fmt.Scanln(&productPrice); err != nil {
+				fmt.Println("Invalid price")
+			} else {
+				break
+			}
+		}
 
 		fmt.Println("Product price:", productPrice)
 
 		var productQuantity int
-
-		fmt.Print("Enter product quantity: ")
-		fmt.Scanln(&productQuantity)
-
+		for {
+			fmt.Print("Enter product quantity: ")
+			for i := 0; i >= 0; i++ {
+				if _, err := fmt.Scanln(&productQuantity); err != nil {
+					fmt.Println("Invalid Quantity:")
+				}
+				break
+		    }
+			
+			
+		}
 		fmt.Println("Product quantity:", productQuantity)
 
 		product := Product{
-		Name:     productName,
-		Price:    productPrice,
-		Quantity: productQuantity,
-	}
+			Name:     productName,
+			Price:    productPrice,
+			Quantity: productQuantity,
+		}
 
 		fmt.Println("Product added:", product)
 
