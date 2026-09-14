@@ -22,6 +22,14 @@ var products []Product
 var sales []Sale
 
 func main() {
+		data, err := os.ReadFile("products.txt")
+
+	if err != nil {
+		fmt.Println("Error reading products:", err)
+	} else {
+		fmt.Println(string(data))
+	}
+
 	fmt.Println("================================")
 	fmt.Println("       BUSINESS MANAGER")
 	fmt.Println("================================")
