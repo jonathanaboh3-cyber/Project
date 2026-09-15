@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type Product struct {
@@ -22,21 +24,56 @@ var products []Product
 var sales []Sale
 
 func main() {
-		data, err := os.ReadFile("products.txt")
+
+	// Load products from file
+	data, err := os.ReadFile("products.txt")
 
 	if err != nil {
 		fmt.Println("Error reading products:", err)
-	} else {
-		fmt.Println(string(data))
+		return
 	}
 
-	fmt.Println("================================")
-	fmt.Println("       BUSINESS MANAGER")
-	fmt.Println("================================")
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
 
-	var choice int
+	for _, line := range lines {
+
+		parts := strings.Split(line, ",")
+
+		if len(parts) != 3 {
+			fmt.Println("Invalid product data:", line)
+			continue
+		}
+
+		price, err := strconv.ParseFloat(parts[1], 64)
+
+		if err != nil {
+			fmt.Println("Invalid price:", parts[1])
+			continue
+		}
+
+		quantity, err := strconv.Atoi(parts[2])
+
+		if err != nil {
+			fmt.Println("Invalid quantity:", parts[2])
+			continue
+		}
+
+		product := Product{
+			Name:     parts[0],
+			Price:    price,
+			Quantity: quantity,
+		}
+
+		products = append(products, product)
+	}
 
 	for {
+
+		fmt.Println()
+		fmt.Println("================================")
+		fmt.Println("          BIZFLOW")
+		fmt.Println("================================")
+
 		fmt.Println()
 		fmt.Println("1. Add Product")
 		fmt.Println("2. View Products")
@@ -45,8 +82,14 @@ func main() {
 		fmt.Println("5. Exit")
 		fmt.Println()
 
+		var choice int
+
 		fmt.Print("Choose an option: ")
-		fmt.Scanln(&choice)
+
+		if _, err := fmt.Scanln(&choice); err != nil {
+			fmt.Println("Invalid option. Please enter a number.")
+			continue
+		}
 
 		switch choice {
 
@@ -56,6 +99,7 @@ func main() {
 			fmt.Print("Enter product name: ")
 			fmt.Scanln(&productName)
 
+			// Check if product already exists
 			exists := false
 
 			for _, product := range products {
@@ -106,6 +150,7 @@ func main() {
 
 			products = append(products, product)
 
+			// Save product to file
 			data := fmt.Sprintf(
 				"%s,%.2f,%d\n",
 				product.Name,
@@ -152,7 +197,9 @@ func main() {
 			found := false
 
 			for i, product := range products {
+
 				if product.Name == saleProduct {
+
 					found = true
 
 					fmt.Println("Product found:", product)
@@ -174,6 +221,7 @@ func main() {
 					if saleQuantity > product.Quantity {
 						fmt.Println("Not enough quantity in stock.")
 					} else {
+
 						products[i].Quantity =
 							products[i].Quantity - saleQuantity
 
@@ -191,8 +239,6 @@ func main() {
 						}
 
 						sales = append(sales, sale)
-
-						fmt.Println("Sale recorded successfully.")
 					}
 
 					break
@@ -225,7 +271,7 @@ func main() {
 			return
 
 		default:
-			fmt.Println("Invalid option")
+			fmt.Println("Invalid option.")
 		}
 	}
 }
