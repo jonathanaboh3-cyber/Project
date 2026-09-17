@@ -23,6 +23,28 @@ type Sale struct {
 var products []Product
 var sales []Sale
 
+func saveProducts() {
+	file, err := os.Create("products.txt")
+
+	if err != nil {
+		fmt.Println("Error saving products:", err)
+		return
+	}
+
+	defer file.Close()
+
+	for _, product := range products {
+		data := fmt.Sprintf(
+			"%s,%.2f,%d\n",
+			product.Name,
+			product.Price,
+			product.Quantity,
+		)
+
+		file.WriteString(data)
+	}
+}
+
 func main() {
 
 	// Load products from file
@@ -71,7 +93,7 @@ func main() {
 
 		fmt.Println()
 		fmt.Println("================================")
-		fmt.Println("          BIZFLOW")
+		fmt.Println("            BIZFLOW")
 		fmt.Println("================================")
 
 		fmt.Println()
@@ -150,7 +172,7 @@ func main() {
 
 			products = append(products, product)
 
-			// Save product to file
+			// Save new product
 			data := fmt.Sprintf(
 				"%s,%.2f,%d\n",
 				product.Name,
@@ -224,6 +246,8 @@ func main() {
 
 						products[i].Quantity =
 							products[i].Quantity - saleQuantity
+
+						saveProducts()
 
 						totalAmount :=
 							product.Price * float64(saleQuantity)
