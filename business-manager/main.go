@@ -45,9 +45,31 @@ func saveProducts() {
 	}
 }
 
-func main() {
+func saveSale(sale Sale) {
+	data := fmt.Sprintf(
+		"%s,%.2f,%d,%.2f\n",
+		sale.ProductName,
+		sale.Price,
+		sale.Quantity,
+		sale.Total,
+	)
 
-	// Load products from file
+	file, err := os.OpenFile(
+		"sales.txt",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+		0644,
+	)
+
+	if err != nil {
+		fmt.Println("Error saving sale:", err)
+		return
+	}
+
+	file.WriteString(data)
+	file.Close()
+}
+
+func loadProducts() {
 	data, err := os.ReadFile("products.txt")
 
 	if err != nil {
@@ -58,7 +80,6 @@ func main() {
 	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
 
 	for _, line := range lines {
-
 		parts := strings.Split(line, ",")
 
 		if len(parts) != 3 {
@@ -88,9 +109,142 @@ func main() {
 
 		products = append(products, product)
 	}
+}
+
+func loadSales() {
+	data, err := os.ReadFile("sales.txt")
+
+	if err != nil {
+		fmt.Println("Error reading sales:", err)
+		return
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+
+	for _, line := range lines {
+		parts := strings.Split(line, ",")
+
+		if len(parts) != 4 {
+			fmt.Println("Invalid sale data:", line)
+			continue
+		}
+
+		price, err := strconv.ParseFloat(parts[1], 64)
+
+		if err != nil {
+			fmt.Println("Invalid price:", parts[1])
+			continue
+		}
+
+		quantity, err := strconv.Atoi(parts[2])
+
+		if err != nil {
+			fmt.Println("Invalid quantity:", parts[2])
+			continue
+		}
+
+		total, err := strconv.ParseFloat(parts[3], 64)
+
+		if err != nil {
+			fmt.Println("Invalid total:", parts[3])
+			continue
+		}
+
+		sale := Sale{
+			ProductName: parts[0],
+			Price:       price,
+			Quantity:    quantity,
+			Total:       total,
+		}
+
+		sales = append(sales, sale)
+	}
+}
+
+func addProduct() {
+	var productName string
+
+	fmt.Print("Enter product name: ")
+	fmt.Scanln(&productName)
+
+	exists := false
+
+	for _, product := range products {
+		if product.Name == productName {
+			exists = true
+			break
+		}
+	}
+
+	if exists {
+		fmt.Println("Product already exists.")
+		return
+	}
+
+	var productPrice float64
 
 	for {
+		fmt.Print("Enter product price: ")
 
+		if _, err := fmt.Scanln(&productPrice); err != nil {
+			fmt.Println("Invalid price")
+		} else if productPrice <= 0 {
+			fmt.Println("Price must be greater than 0")
+		} else {
+			break
+		}
+	}
+
+	var productQuantity int
+
+	for {
+		fmt.Print("Enter product quantity: ")
+
+		if _, err := fmt.Scanln(&productQuantity); err != nil {
+			fmt.Println("Invalid quantity")
+		} else if productQuantity <= 0 {
+			fmt.Println("Quantity must be greater than 0")
+		} else {
+			break
+		}
+	}
+
+	product := Product{
+		Name:     productName,
+		Price:    productPrice,
+		Quantity: productQuantity,
+	}
+
+	products = append(products, product)
+
+	data := fmt.Sprintf(
+		"%s,%.2f,%d\n",
+		product.Name,
+		product.Price,
+		product.Quantity,
+	)
+
+	file, err := os.OpenFile(
+		"products.txt",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+		0644,
+	)
+
+	if err != nil {
+		fmt.Println("Error saving product:", err)
+	} else {
+		file.WriteString(data)
+		file.Close()
+		fmt.Println("Product saved to file.")
+	}
+}
+
+func main() {
+
+	loadProducts()
+	loadSales()
+
+	for {
 		fmt.Println()
 		fmt.Println("================================")
 		fmt.Println("            BIZFLOW")
@@ -116,83 +270,7 @@ func main() {
 		switch choice {
 
 		case 1:
-			var productName string
-
-			fmt.Print("Enter product name: ")
-			fmt.Scanln(&productName)
-
-			// Check if product already exists
-			exists := false
-
-			for _, product := range products {
-				if product.Name == productName {
-					exists = true
-					break
-				}
-			}
-
-			if exists {
-				fmt.Println("Product already exists.")
-				continue
-			}
-
-			var productPrice float64
-
-			for {
-				fmt.Print("Enter product price: ")
-
-				if _, err := fmt.Scanln(&productPrice); err != nil {
-					fmt.Println("Invalid price")
-				} else if productPrice <= 0 {
-					fmt.Println("Price must be greater than 0")
-				} else {
-					break
-				}
-			}
-
-			var productQuantity int
-
-			for {
-				fmt.Print("Enter product quantity: ")
-
-				if _, err := fmt.Scanln(&productQuantity); err != nil {
-					fmt.Println("Invalid quantity")
-				} else if productQuantity <= 0 {
-					fmt.Println("Quantity must be greater than 0")
-				} else {
-					break
-				}
-			}
-
-			product := Product{
-				Name:     productName,
-				Price:    productPrice,
-				Quantity: productQuantity,
-			}
-
-			products = append(products, product)
-
-			// Save new product
-			data := fmt.Sprintf(
-				"%s,%.2f,%d\n",
-				product.Name,
-				product.Price,
-				product.Quantity,
-			)
-
-			file, err := os.OpenFile(
-				"products.txt",
-				os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-				0644,
-			)
-
-			if err != nil {
-				fmt.Println("Error saving product:", err)
-			} else {
-				file.WriteString(data)
-				file.Close()
-				fmt.Println("Product saved to file.")
-			}
+			addProduct()
 
 		case 2:
 			fmt.Println()
@@ -221,7 +299,6 @@ func main() {
 			for i, product := range products {
 
 				if product.Name == saleProduct {
-
 					found = true
 
 					fmt.Println("Product found:", product)
@@ -263,6 +340,8 @@ func main() {
 						}
 
 						sales = append(sales, sale)
+
+						saveSale(sale)
 					}
 
 					break
