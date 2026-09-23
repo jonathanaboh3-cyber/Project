@@ -20,8 +20,14 @@ type Sale struct {
 	Total       float64
 }
 
+type Customer struct {
+	Name  string
+	Phone string
+}
+
 var products []Product
 var sales []Sale
+var customers []Customer
 
 func saveProducts() {
 	file, err := os.Create("products.txt")
@@ -401,6 +407,43 @@ func viewSales() {
 	}
 }
 
+func addCustomer() {
+	var customerName string
+	var customerPhone string
+
+	fmt.Print("Enter customer name: ")
+	fmt.Scanln(&customerName)
+
+	fmt.Print("Enter customer phone: ")
+	fmt.Scanln(&customerPhone)
+
+	customer := Customer{
+		Name:  customerName,
+		Phone: customerPhone,
+	}
+
+	customers = append(customers, customer)
+
+	fmt.Println("Customer added successfully.")
+}
+
+func viewCustomers() {
+	fmt.Println()
+	fmt.Println("===== CUSTOMERS =====")
+
+	if len(customers) == 0 {
+		fmt.Println("No customers available.")
+		return
+	}
+
+	for i, customer := range customers {
+		fmt.Println("Customer", i+1)
+		fmt.Println("Name:", customer.Name)
+		fmt.Println("Phone:", customer.Phone)
+		fmt.Println()
+	}
+}
+
 func main() {
 
 	loadProducts()
@@ -418,7 +461,9 @@ func main() {
 		fmt.Println("3. Search Product")
 		fmt.Println("4. Record Sale")
 		fmt.Println("5. View Sales")
-		fmt.Println("6. Exit")
+		fmt.Println("6. add Customer")
+		fmt.Println("7. view Customers")
+		fmt.Println("8. Goodbye!")
 		fmt.Println()
 
 		var choice int
@@ -448,6 +493,12 @@ func main() {
 			viewSales()
 
 		case 6:
+			addCustomer()
+
+		case 7:
+			viewCustomers()
+
+		case 8:
 			fmt.Println("Goodbye!")
 			return
 
