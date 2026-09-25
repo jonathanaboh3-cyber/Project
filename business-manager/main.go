@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Product struct {
@@ -18,9 +19,11 @@ type Sale struct {
 	Price       float64
 	Quantity    int
 	Total       float64
+	DateTime    string
 }
 
 type Customer struct {
+	ID    int
 	Name  string
 	Phone string
 }
@@ -53,11 +56,12 @@ func saveProducts() {
 
 func saveSale(sale Sale) {
 	data := fmt.Sprintf(
-		"%s,%.2f,%d,%.2f\n",
+		"%s,%.2f,%d,%.2f,%s\n",
 		sale.ProductName,
 		sale.Price,
 		sale.Quantity,
 		sale.Total,
+		sale.DateTime,
 	)
 
 	file, err := os.OpenFile(
@@ -68,6 +72,29 @@ func saveSale(sale Sale) {
 
 	if err != nil {
 		fmt.Println("Error saving sale:", err)
+		return
+	}
+
+	file.WriteString(data)
+	file.Close()
+}
+
+func saveCustomer(customer Customer) {
+	data := fmt.Sprintf(
+		"%d,%s,%s\n",
+		customer.ID,
+		customer.Name,
+		customer.Phone,
+	)
+
+	file, err := os.OpenFile(
+		"customers.txt",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+		0644,
+	)
+
+	if err != nil {
+		fmt.Println("Error saving customer:", err)
 		return
 	}
 
@@ -130,7 +157,7 @@ func loadSales() {
 	for _, line := range lines {
 		parts := strings.Split(line, ",")
 
-		if len(parts) != 4 {
+		if len(parts) != 4 && len(parts) != 5 {
 			fmt.Println("Invalid sale data:", line)
 			continue
 		}
@@ -163,7 +190,48 @@ func loadSales() {
 			Total:       total,
 		}
 
+		if len(parts) == 5 {
+			sale.DateTime = parts[4]
+		} else {
+			sale.DateTime = "Not available"
+		}
+
 		sales = append(sales, sale)
+	}
+}
+
+func loadCustomers() {
+	data, err := os.ReadFile("customers.txt")
+
+	if err != nil {
+		fmt.Println("Error reading customers:", err)
+		return
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+
+	for _, line := range lines {
+		parts := strings.Split(line, ",")
+
+		if len(parts) != 3 {
+			fmt.Println("Invalid customer data:", line)
+			continue
+		}
+
+		id, err := strconv.Atoi(parts[0])
+
+		if err != nil {
+			fmt.Println("Invalid customer ID:", parts[0])
+			continue
+		}
+
+		customer := Customer{
+			ID:    id,
+			Name:  parts[1],
+			Phone: parts[2],
+		}
+
+		customers = append(customers, customer)
 	}
 }
 
@@ -291,11 +359,14 @@ func processPurchase(index int) {
 
 	total := product.Price * float64(quantity)
 
+	dateTime := time.Now().Format("02/01/2006 03:04 PM")
+
 	sale := Sale{
 		ProductName: product.Name,
 		Price:       product.Price,
 		Quantity:    quantity,
 		Total:       total,
+		DateTime:    dateTime,
 	}
 
 	sales = append(sales, sale)
@@ -308,6 +379,7 @@ func processPurchase(index int) {
 	fmt.Println("Product:", product.Name)
 	fmt.Println("Quantity:", quantity)
 	fmt.Println("Total amount:", total)
+	fmt.Println("Date & Time:", dateTime)
 }
 
 func searchProduct() {
@@ -403,6 +475,7 @@ func viewSales() {
 		fmt.Println("Price:", sale.Price)
 		fmt.Println("Quantity:", sale.Quantity)
 		fmt.Println("Total:", sale.Total)
+		fmt.Println("Date & Time:", sale.DateTime)
 		fmt.Println()
 	}
 }
@@ -414,15 +487,41 @@ func addCustomer() {
 	fmt.Print("Enter customer name: ")
 	fmt.Scanln(&customerName)
 
-	fmt.Print("Enter customer phone: ")
-	fmt.Scanln(&customerPhone)
+	for {
+		fmt.Print("Enter customer phone: ")
+		fmt.Scanln(&customerPhone)
+
+		if len(customerPhone) != 11 {
+			fmt.Println("Invalid phone number. Phone number must be 11 digits.")
+			continue
+		}
+
+		valid := true
+
+		for _, digit := range customerPhone {
+			if digit < '0' || digit > '9' {
+				valid = false
+				break
+			}
+		}
+
+		if !valid {
+			fmt.Println("Invalid phone number. Use digits only.")
+			continue
+		}
+
+		break
+	}
 
 	customer := Customer{
+		ID:    len(customers) + 1,
 		Name:  customerName,
 		Phone: customerPhone,
 	}
 
 	customers = append(customers, customer)
+
+	saveCustomer(customer)
 
 	fmt.Println("Customer added successfully.")
 }
@@ -436,8 +535,8 @@ func viewCustomers() {
 		return
 	}
 
-	for i, customer := range customers {
-		fmt.Println("Customer", i+1)
+	for _, customer := range customers {
+		fmt.Println("Customer ID:", customer.ID)
 		fmt.Println("Name:", customer.Name)
 		fmt.Println("Phone:", customer.Phone)
 		fmt.Println()
@@ -448,6 +547,7 @@ func main() {
 
 	loadProducts()
 	loadSales()
+	loadCustomers()
 
 	for {
 		fmt.Println()
@@ -461,9 +561,9 @@ func main() {
 		fmt.Println("3. Search Product")
 		fmt.Println("4. Record Sale")
 		fmt.Println("5. View Sales")
-		fmt.Println("6. add Customer")
-		fmt.Println("7. view Customers")
-		fmt.Println("8. Goodbye!")
+		fmt.Println("6. Add Customer")
+		fmt.Println("7. View Customers")
+		fmt.Println("8. Exit")
 		fmt.Println()
 
 		var choice int
